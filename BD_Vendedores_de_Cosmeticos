@@ -1,0 +1,73 @@
+CREATE TABLE Clientes (
+    ID_Cliente SERIAL PRIMARY KEY,
+    Nome_Cliente VARCHAR(100) NOT NULL,
+    CPF VARCHAR(11),
+    Telefone VARCHAR(15) UNIQUE,  -- Defini o telefone como único
+    Email VARCHAR(100),
+    Endereco_CEP VARCHAR(10),
+    Endereco_Rua VARCHAR(100),
+    Endereco_Numero VARCHAR(10),
+    Endereco_Complemento VARCHAR(50),
+    Endereco_PontoReferencia VARCHAR(100),
+    Endereco_Bairro VARCHAR(50),
+    Endereco_Cidade VARCHAR(50),
+    Endereco_Estado VARCHAR(2),
+    Endereco_Pais VARCHAR(50)
+);
+
+
+
+CREATE TABLE Produtos (
+    Cod_Produto SERIAL PRIMARY KEY,
+    Nome_Produto VARCHAR(255) NOT NULL,
+    Valor DECIMAL(10, 2) NOT NULL
+);
+
+
+
+CREATE TABLE Pedidos (
+    Cod_Pedido SERIAL PRIMARY KEY,
+    ID_Cliente INT NOT NULL,
+    Data_Pedido DATE NOT NULL,
+    Data_Pagamento DATE DEFAULT CURRENT_DATE,    -- Coloquei para preencher automaticamente para a data do dia atual
+    CONSTRAINT fk_cliente FOREIGN KEY (ID_Cliente) REFERENCES Clientes (ID_Cliente)
+);
+
+
+
+CREATE TABLE Pedido_Produtos (
+    Cod_Pedido INT NOT NULL,
+    Cod_Produto INT NOT NULL,
+    Quantidade INT NOT NULL,
+    Valor DECIMAL(10, 2) NOT NULL,
+    PRIMARY KEY (Cod_Pedido, Cod_Produto),
+    CONSTRAINT fk_pedido FOREIGN KEY (Cod_Pedido) REFERENCES Pedidos (Cod_Pedido),
+    CONSTRAINT fk_produto FOREIGN KEY (Cod_Produto) REFERENCES Produtos (Cod_Produto)
+);
+
+
+
+-- CRIANDO TABELA DE PESQUISA DE PEDIDOS X CLIENTE X PRODUTOS
+
+SELECT
+    p.Cod_Pedido,
+    c.Nome_Cliente,
+    p.Data_Pedido,
+    pr.Nome_Produto,
+    pr.Valor,
+    pp.Quantidade,
+    (pp.Quantidade * pr.Valor) AS Valor_X_QT,
+    pp.Valor AS Valor_Total_Lançado,
+    (pp.Valor - pp.Quantidade * pr.Valor) AS Diferença,
+    SUM(pp.Valor) OVER (PARTITION BY p.Cod_Pedido) AS Valor_Total_Pedido,
+    p.Data_Pagamento
+FROM 
+    Pedidos p
+JOIN 
+    Clientes c ON p.ID_Cliente = c.ID_Cliente
+JOIN 
+    Pedido_Produtos pp ON p.Cod_Pedido = pp.Cod_Pedido
+JOIN 
+    Produtos pr ON pp.Cod_Produto = pr.Cod_Produto
+WHERE 
+    p.Cod_Pedido = Digite_Cod_Pedido;     -- Em Digite_Cod_Pedido lembrar de substituir pelo Número do Código do Pedido...
